@@ -1,0 +1,19 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+
+# Force Forge to use the stable 0.8.25 version
+solc_version = "0.8.25"
+
+remappings = [
+    "@chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/",
+    "forge-std/=lib/forge-std/src/"
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
+]
+# This ensures Forge downloads 0.8.25 if it's missing
+auto_detect_solc = true
+
+# Since you're doing Tokenization/RWA, you'll likely need the optimizer
+optimizer = true
+optimizer_runs = 200
