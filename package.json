@@ -1,7 +1,7 @@
 {
  "scripts": {
  "simulate": "node ./functions/simulators/alpacaMintSimulator.js 2>nul",
- "upload-secrets": "node ./functions/uploadSecrets.js" 
+ "upload-secrets": "node ./functions/uploadSecrets.js 2>nul" 
 },
 "dependencies": {
   "@chainlink/functions-toolkit": "^0.2.8", 

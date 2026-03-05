@@ -11,6 +11,9 @@ remappings = [
     "forge-std/=lib/forge-std/src/"
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
+
+fs_permissions = [{access ="read" , path ="./ "}]
+
 # This ensures Forge downloads 0.8.25 if it's missing
 auto_detect_solc = true
 

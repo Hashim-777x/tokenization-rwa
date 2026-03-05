@@ -1,15 +1,13 @@
 const  {SecretsManager} = require("@chainlink/functions-toolkit");
 require('dotenv').config();
-
+ 
 const {ethers} = require("ethers");
 
+
+// we are uploading our secrets to the sepolia DON using the functions toolkit, this will allow us to access these secrets in our functions without exposing them on chain or in our code. we will encrypt the secrets and upload them to the DON, then we can access them in our functions using the slotId and the version returned from the upload function. we will also set an expiration time for the secrets, after which they will be deleted from the DON. this is a one time setup, once the secrets are uploaded to the DON, we can use them in our functions until they expire.
 async function uploadSecrets() {
   const routerAddress = "0xb83E47C2bC239B3bf370bc41e1459A34b41238D0";
- const donId = ethers.utils.formatBytes32String("fun-ethereum-sepolia-1");// donId for Sepolia from chainlink docs and this is the api Endpoint  ...another one for smart contract
-  //  DEBUG LINES:
-  console.log("routerAddress:", routerAddress);
-  console.log("privateKey:", process.env.PRIVATE_KEY ? " found" : " undefined");
-  console.log("rpcUrl:", process.env.SEPOLIA_RPC_URL ? " found" : " undefined");
+ const donId = "fun-ethereum-sepolia-1";// donId for Sepolia from chainlink docs and this is the api Endpoint  ...another one for smart contracts
   const gatewayUrls = [
     "https://01.functions-gateway.testnet.chain.link/",
     "https://02.functions-gateway.testnet.chain.link/"
@@ -21,14 +19,10 @@ async function uploadSecrets() {
   const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
   const wallet = new ethers.Wallet(privateKey);
   const signer = wallet.connect(provider);
-  
- //  DEBUG LINES:
-  console.log("donId bytes32:", donId);
-  console.log("signer address:", await signer.getAddress());
 
   const secretsManager = new SecretsManager({
     signer: signer,
-    functionRouterAddress: routerAddress,
+    functionsRouterAddress: routerAddress,
     donId: donId
   });
   await secretsManager.initialize();
@@ -47,7 +41,7 @@ async function uploadSecrets() {
   if(!uploadResult.success){
     throw Error(`Failed to upload secrets.: ${uploadResult.errorMessage}`);
   } 
-   console.log(`\n Secrets uploaded successfully! , response from DON: ${uploadResult.response}`);
+   console.log(`\n Secrets uploaded successfully! , response from DON: ${uploadResult}`);
    const donHostedSecretsVersion = parseInt(uploadResult.version);
    console.log(`\n DON Hosted Secrets Version: ${donHostedSecretsVersion}`);
 }
