@@ -45,6 +45,11 @@ struct dTslaRequest {
 
 string private s_mintSourceCode; // The source code for the Chainlink Functions request
 uint256 private s_portfolioBalance; // Total supply of dTSLA tokens
+bytes32 private s_mostRecentRequestId; // To track the most recent request ID for minting
+string private s_redeemSourceCode; // To track the amount for the most recent request
+uint8 donHostedSecretsSlotID = 0; // Storage gap for future variables added in the DON-hosted Functions version
+uint64 donHostedSecretsVersion = 1772776411;
+
 mapping(bytes32 requestId => dTslaRequest request ) private s_requestIdToRequest; // Mapping to track pending requests by their ID 
 mapping(address user => uint256 pendingWithdrawlAmount) private s_userToWithdrawlAmount; // Mapping to track the amount of USDC a user can withdraw after redeeming dTSLA
 
@@ -60,7 +65,7 @@ address constant SEPOLIA_USDC = 0xbAEA218C8EE122960D54c63CF03C098723e82fB0;//0x0
 uint256 constant ADDITIONAL_FEED_PRECISION = 1e10; // Assuming the price feed returns price with 8 decimals
 uint256 constant MINIMUM_WITHDRAWL_AMOUNT = 100e18; // Minimum amount of dTSLA that can be redeemed (e.g., 10 dTSLA)
 uint64 immutable i_subId; // Chainlink subscription ID for billing
-string private s_redeemSourceCode; // The source code for the Chainlink Functions request to redeem
+ // The source code for the Chainlink Functions request to redeem
 
 constructor(string memory mintSourceCode,uint64 subId , string memory redeemSourceCode) ConfirmedOwner(msg.sender) FunctionsClient(SEPOLIA_FUNCTIONS_ROUTER) ERC20("dTSLA", "dTSLA") {
     s_mintSourceCode = mintSourceCode;
@@ -73,6 +78,7 @@ constructor(string memory mintSourceCode,uint64 subId , string memory redeemSour
 function sendMintRequest(uint256 amount) external onlyOwner returns (bytes32) {
     FunctionsRequest.Request memory req;
     req.initializeRequestForInlineJavaScript(s_mintSourceCode);
+    req.addDONHostedSecrets(donHostedSecretsSlotID, donHostedSecretsVersion);
     bytes32 requestId = _sendRequest(req.encodeCBOR(), i_subId, GAS_LIMIT, DON_ID);
     s_requestIdToRequest[requestId] = dTslaRequest(amount,msg.sender,MinOrRedeem.mint);
     return requestId;
@@ -122,7 +128,7 @@ function sendRedeemRequest(uint256 amountdTsla) external {
 
     bytes32 requestId = _sendRequest(req.encodeCBOR(), i_subId, GAS_LIMIT, DON_ID);
     s_requestIdToRequest[requestId] = dTslaRequest(amountdTsla,msg.sender,MinOrRedeem.redeem);
-
+    s_mostRecentRequestId = requestId;
     _burn(msg.sender, amountdTsla); // Burn the dTSLA tokens immediately to prevent double spending while waiting for Oracle response
 }
 
@@ -151,13 +157,21 @@ function withdraw() external {
 
 // This function is called by the Chainlink Oracle when it has the result of the request
 function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory /*err*/) internal override {
-    dTslaRequest storage request = s_requestIdToRequest[requestId];
-    if (request.minOrRedeem == MinOrRedeem.mint) {
-        _mintFulFillRequest(requestId, response);
-    } else {
-        _redeemFulFillRequest(requestId, response);
-    }
+    // dTslaRequest storage request = s_requestIdToRequest[requestId];
+    // if (request.minOrRedeem == MinOrRedeem.mint) {
+    //     _mintFulFillRequest(requestId, response);
+    // } else {
+    //     _redeemFulFillRequest(requestId, response);
+    // }
+    s_portfolioBalance = uint256(bytes32(response));
 }
+
+function finishMint()external onlyOwner{
+    uint256 amountOfTokensToMint = s_requestIdToRequest[s_mostRecentRequestId].amountOfToken;
+    _mint(s_requestIdToRequest[s_mostRecentRequestId].requester, amountOfTokensToMint);
+}
+
+
 
 function _getCollateralRatioAdjustedTotalBalance(uint256 amountOfTokensToMint) internal view returns (uint256) {
     // For simplicity, let's assume 1 dTSLA token represents $100 worth of TSLA shares
