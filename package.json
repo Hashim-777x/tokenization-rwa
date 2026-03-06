@@ -1,7 +1,8 @@
 {
  "scripts": {
  "simulate": "node ./functions/simulators/alpacaMintSimulator.js 2>nul",
- "upload-secrets": "node ./functions/uploadSecrets.js 2>nul" 
+ "upload-secrets": "node ./functions/uploadSecrets.js 2>nul",
+"deploy": "forge script script/DeployDTsla.sol:DeployDTsla --sender 0xa28b40b3c8915eefce351876f2b22d53819d754e --account defaultkey --rpc-url $env:SEPOLIA_RPC_URL --etherscan-api-key $env:ETHERSCAN_API_KEY --priority-gas-price 1 --verify --broadcast"
 },
 "dependencies": {
   "@chainlink/functions-toolkit": "^0.2.8", 
