@@ -1,6 +1,6 @@
 -include .env
 
-.PHONY: deploy verify interact
+.PHONY: deploy verify mint
 
 deploy:
 	forge script script/DeployDTsla.sol:DeployDTsla \
@@ -8,9 +8,6 @@ deploy:
 	--account defaultKey \
 	--rpc-url ${SEPOLIA_RPC_URL} \
 	--etherscan-api-key ${ETHERSCAN_API_KEY} \
-	--gas-limit 5000000 \
-	--gas-price 20000000000 \
-	--priority-gas-price 1000000000 \
 	--verify \
 	--broadcast
 
